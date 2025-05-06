@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Product;
+use Illuminate\Http\Request;
+
+class ProductController extends Controller
+{
+    public function index(Request $request)
+    {
+        $products = Product::latest()->get();
+
+        return view('products.index', compact('products'));
+    }
+	public function show($slug)
+{
+    	$product = \App\Models\Product::where('slug', $slug)->firstOrFail();
+
+    	return view('products.show', compact('product'));
+}
+
+}
