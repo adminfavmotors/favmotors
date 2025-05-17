@@ -7,17 +7,28 @@
     <!-- Навигация и Поиск -->
     <div class="flex items-center flex-1 mx-4 space-x-4">
         <!-- Каталог (выпадающее меню) -->
-        <div class="relative group">
-            <button class="text-gray-700 font-semibold hover:text-blue-600 focus:outline-none">Katalog</button>
-            <div class="absolute left-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
-                <ul class="py-2">
-                    <li><a href="{{ route('category.show', 'filtry') }}" class="block px-4 py-2 hover:bg-gray-100">Filtry</a></li>
-                    <li><a href="{{ route('category.show', 'uklad-hamulcowy') }}" class="block px-4 py-2 hover:bg-gray-100">Układ hamulcowy</a></li>
-                    <li><a href="{{ route('category.show', 'oswietlenie') }}" class="block px-4 py-2 hover:bg-gray-100">Oświetlenie</a></li>
-                    <li><a href="{{ route('category.show', 'zawieszenie') }}" class="block px-4 py-2 hover:bg-gray-100">Zawieszenie</a></li>
-                </ul>
-            </div>
-        </div>
+<div class="relative inline-block group">
+  <button class="text-gray-700 font-semibold hover:text-blue-600 focus:outline-none">
+    Katalog
+  </button>
+
+  <div
+    class="absolute left-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-lg
+           opacity-0 invisible
+           group-hover:opacity-100 group-hover:visible
+           pointer-events-none group-hover:pointer-events-auto
+           transition-all duration-200
+           z-50"
+  >
+    <ul class="py-2">
+      <li><a href="{{ route('category.show', 'filtry') }}" class="block px-4 py-2 hover:bg-gray-100">Filtry</a></li>
+      <li><a href="{{ route('category.show', 'uklad-hamulcowy') }}" class="block px-4 py-2 hover:bg-gray-100">Układ hamulcowy</a></li>
+      <li><a href="{{ route('category.show', 'oswietlenie') }}" class="block px-4 py-2 hover:bg-gray-100">Oświetlenie</a></li>
+      <li><a href="{{ route('category.show', 'zawieszenie') }}" class="block px-4 py-2 hover:bg-gray-100">Zawieszenie</a></li>
+    </ul>
+  </div>
+</div>
+
 
         <!-- Строка поиска -->
         <form action="{{ route('products.index') }}" method="GET" class="flex-grow max-w-md">

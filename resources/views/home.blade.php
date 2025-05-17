@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+
+<livewire:hero-slider />
+
 <!-- Hero Section -->
 <section class="hero">
   <div class="text-center">
@@ -28,7 +31,29 @@
   </div>
 </section>
 
-<!-- Footer note to check Tailwind -->
-<div class="p-6 bg-green-500 text-white text-xl font-bold">
-</div>
+{{-- Акции --}}
+@if($promotions->isEmpty())
+  <p class="text-center py-4">Нет активных акций</p>
+@else
+  <div class="mt-6 px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    @foreach($promotions as $promotion)
+      <x-promo-card
+        :background="$promotion->background"
+        :url="route('promotions.show', $promotion->slug)"
+        :show-overlay="false"
+      />
+    @endforeach
+  </div>
+@endif
+
+{{-- Раздел «O nas», отделённый от акций --}}
+<hr class="my-8 border-gray-300">
+
+@if(! empty($aboutPage))
+  <section id="o-nas" class="prose mx-auto mb-12">
+    <h2>O nas</h2>
+    {!! $aboutPage->content !!}
+  </section>
+@endif
+
 @endsection
