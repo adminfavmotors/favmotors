@@ -13,11 +13,10 @@ class ProductController extends Controller
 
         return view('products.index', compact('products'));
     }
-	public function show($slug)
-{
-    	$product = \App\Models\Product::where('slug', $slug)->firstOrFail();
 
-    	return view('products.show', compact('product'));
-}
-
+    // Используем имплицитную привязку модели по slug
+    public function show(Product $product)
+    {
+        return view('products.show', compact('product'));
+    }
 }

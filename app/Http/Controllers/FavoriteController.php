@@ -8,22 +8,49 @@ class FavoriteController extends Controller
 {
     /**
      * Отображает страницу избранных товаров.
-     *
-     * @return \Illuminate\View\View
      */
     public function index()
     {
-        // Получим из сессии массив избранных (ключи — ID товаров)
         $favorites = session()->get('favorites', []);
 
-        // Здесь вы могли бы загрузить модели товаров по этим ID,
-        // например:
-        // $products = \App\Models\Product::whereIn('id', array_keys($favorites))->get();
-
-        // Сейчас просто передаём в вью массив ID
         return view('favorites.index', [
             'favorites' => $favorites,
-            // 'products' => $products,
         ]);
+    }
+
+    /**
+     * Добавляет товар в список избранного.
+     */
+    public function add(Request $request)
+    {
+        $favorites = session()->get('favorites', []);
+
+        $id    = $request->input('id');
+        $name  = $request->input('name');
+        $price = $request->input('price');
+
+        if (!isset($favorites[$id])) {
+            $favorites[$id] = [
+                'name'  => $name,
+                'price' => $price,
+            ];
+            session()->put('favorites', $favorites);
+        }
+
+        return redirect()->back()->with('success', 'Produkt dodany do ulubionych.');
+    }
+
+    /**
+     * Удаляет товар из списка избранного.
+     */
+    public function remove(Request $request, $id)
+    {
+        $favorites = session()->get('favorites', []);
+        if (isset($favorites[$id])) {
+            unset($favorites[$id]);
+            session()->put('favorites', $favorites);
+        }
+
+        return redirect()->route('favorites.index')->with('success', 'Produkt usunięty z ulubionych.');
     }
 }

@@ -4,92 +4,105 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
-use App\Models\Category;
-use Filament\Forms;
-use Filament\Tables;
+use App\Models\Manufacturer;
+use App\Models\ProductGroup;
 use Filament\Resources\Resource;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Section;
+use Filament\Forms\Get;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Filters\Filter;
+use Illuminate\Support\Str;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
+    protected static ?string $navigationIcon = 'heroicon-o-cube';
     protected static ?string $navigationLabel = 'Produkty';
-    protected static ?string $pluralLabel = 'Produkty';
-    protected static ?string $modelLabel = 'Produkt';
+    protected static ?string $pluralLabel     = 'Produkty';
+    protected static ?string $modelLabel      = 'Produkt';
 
     public static function form(Form $form): Form
-{
-    return $form
-        ->schema([
-            Section::make('Podstawowe informacje')
-                ->schema([
-                    TextInput::make('product_code')
-                        ->label('Kod produktu')
-                        ->maxLength(255),
+    {
+        return $form
+            ->schema([
+                TextInput::make('part_number')
+                    ->label('SKU')
+                    ->required()
+                    ->unique(Product::class, 'part_number', ignoreRecord: true)
+                    ->maxLength(100),
 
-                    TextInput::make('name')
-                        ->label('Nazwa produktu')
-                        ->required()
-                        ->maxLength(255),
+                TextInput::make('slug')
+                    ->label('Slug')
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(fn (Get $get, $set) => $set('slug', Str::slug($get('part_number'))))
+                    ->maxLength(255)
+                    ->unique(Product::class, 'slug', ignoreRecord: true),
 
-                    TextInput::make('slug')
-                        ->label('Adres URL')
-                        ->required()
-                        ->unique(Product::class, 'slug', ignoreRecord: true)
-                        ->maxLength(255),
+                Select::make('manufacturer_id')
+                    ->label('Producent')
+                    ->options(Manufacturer::all()->pluck('name', 'id'))
+                    ->searchable()
+                    ->required(),
 
-                    Select::make('category_id')
-                        ->label('Kategoria')
-                        ->relationship('category', 'name')
-                        ->searchable()
-                        ->preload()
-                        ->required(),
+                Select::make('article_group_id')
+                    ->label('Kategoria')
+                    ->options(ProductGroup::all()->pluck('name', 'id'))
+                    ->searchable()
+                    ->nullable(),
 
-                    TextInput::make('manufacturer')
-                        ->label('Producent')
-                        ->maxLength(255),
-                ]),
+                TextInput::make('short_description')
+                    ->label('Opis krótki')
+                    ->maxLength(255),
 
-            Section::make('Ceny i magazyn')
-                ->schema([
-                    TextInput::make('purchase_price_netto')->label('Cena zakupu netto')->numeric(),
-                    TextInput::make('purchase_price_brutto')->label('Cena zakupu brutto')->numeric(),
-                    TextInput::make('sale_price_netto')->label('Cena sprzedaży netto')->numeric(),
-                    TextInput::make('sale_price_brutto')->label('Cena sprzedaży brutto')->numeric(),
-                    TextInput::make('markup_percentage')->label('Marża (%)')->numeric()->default(0),
-                    TextInput::make('stock')->label('Stan magazynowy')->numeric()->required(),
-                    TextInput::make('sku')->label('Kod SKU')->maxLength(255),
-                    TextInput::make('delivery_time')->label('Czas dostawy')->maxLength(255),
-                ]),
+                Textarea::make('meta_description')
+                    ->label('Opis meta')
+                    ->columnSpanFull(),
 
-            Section::make('Dodatkowe informacje')
-                ->schema([
-                    Textarea::make('description')->label('Opis')->rows(3),
-                    Textarea::make('specification')->label('Specyfikacja')->rows(3),
-                    Textarea::make('application')->label('Zastosowanie')->rows(3),
-                    Textarea::make('replacements')->label('Zamienniki')->rows(3),
-                    Textarea::make('oe_codes')->label('Kody OE')->rows(3),
-                ]),
-        ]);
-}
+                Toggle::make('is_active')
+                    ->label('Aktywny')
+                    ->required(),
 
-	public static function table(Table $table): Table
+                FileUpload::make('background')
+                    ->label('Obrazek')
+                    ->disk('public')
+                    ->directory('products')
+                    ->image()
+                    ->required(),
+            ]);
+    }
+
+    public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Nazwa'),
-                Tables\Columns\TextColumn::make('price')->label('Cena')->money('PLN'),
-                Tables\Columns\TextColumn::make('stock')->label('Stan'),
-                Tables\Columns\TextColumn::make('category.name')->label('Kategoria'),
+                TextColumn::make('part_number')->label('SKU')->searchable(),
+                TextColumn::make('manufacturer.name')->label('Producent')->searchable(),
+                TextColumn::make('group.name')->label('Kategoria')->searchable(),
+                TextColumn::make('short_description')->label('Opis'),
+                IconColumn::make('is_active')->label('Aktywny'),
             ])
-            ->defaultSort('name');
+            ->filters([
+                Filter::make('active')
+                    ->query(fn ($query) => $query->where('is_active', true))
+                    ->label('Aktywne'),
+            ])
+            ->actions([
+                EditAction::make(),
+            ])
+            ->bulkActions([
+                DeleteBulkAction::make(),
+            ]);
     }
 
     public static function getPages(): array
