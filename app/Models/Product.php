@@ -21,6 +21,20 @@ class Product extends Model
         'slug',
         'meta_title',
         'meta_description',
+        'name',
+        'price',
+        'cost',
+        'stock',
+        'description',
+        'usage',
+        'crosses',
+    ];
+
+    // Касты для автоматической сериализации/десериализации
+    protected $casts = [
+        'description' => 'string',
+        'usage'       => 'array',
+        'crosses'     => 'array',
     ];
 
     /**
@@ -47,5 +61,13 @@ class Product extends Model
         return $this->belongsToMany(Attribute::class, 'product_attribute')
                     ->withPivot('value')
                     ->withTimestamps();
+    }
+
+    /**
+     * Информация от поставщика
+     */
+    public function supplierInfo()
+    {
+        return $this->hasOne(\App\Models\SupplierProductInformation::class, 'part_number', 'part_number');
     }
 }

@@ -21,3 +21,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+# Игнорировать папки зависимостей и временные файлы
+/vendor/
+/node_modules/
+*.txt
+*.csv
+*.swp
+/database/seeders/*.csv
