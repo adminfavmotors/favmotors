@@ -46,13 +46,25 @@ class ProductResource extends Resource
                     ->unique(Product::class, 'part_number', ignoreRecord: true)
                     ->maxLength(100),
 
-                TextInput::make('slug')
-                    ->label('Slug')
-                    ->required()
-                    ->reactive()
-                    ->afterStateUpdated(fn (Get $get, $set) => $set('slug', Str::slug($get('part_number'))))
-                    ->maxLength(255)
-                    ->unique(Product::class, 'slug', ignoreRecord: true),
+		TextInput::make('slug')
+		    ->label('Slug')
+		    ->required()
+		    ->reactive()
+		    ->afterStateUpdated(function (Get $get, $set) {
+	        // Получаем название производителя по ID (если выбран)
+	        $manufacturerName = '';
+	        if ($get('manufacturer_id')) {
+	        $manufacturer = \App\Models\Manufacturer::find($get('manufacturer_id'));
+	        if ($manufacturer) {
+                $manufacturerName = $manufacturer->name . ' ';
+            }
+        }
+	        // Собираем slug: "бренд + название + артикул"
+	        $slugBase = trim($manufacturerName . ($get('name') ?? '') . ' ' . ($get('part_number') ?? ''));
+	        $set('slug', \Illuminate\Support\Str::slug($slugBase, '-'));
+	    })
+		    ->maxLength(255)
+		    ->unique(\App\Models\Product::class, 'slug', ignoreRecord: true),
 
                 Select::make('manufacturer_id')
                     ->label('Producent')
