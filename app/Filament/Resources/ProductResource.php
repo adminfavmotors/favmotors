@@ -7,8 +7,8 @@ use App\Models\Product;
 use App\Models\Manufacturer;
 use App\Models\ProductGroup;
 use Filament\Resources\Resource;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
+use Filament\Forms;
+use Filament\Tables;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -31,23 +31,40 @@ class ProductResource extends Resource
     protected static ?string $pluralLabel     = 'Produkty';
     protected static ?string $modelLabel      = 'Produkt';
 
-    public static function form(Form $form): Form
+    public static function form(Forms\Form $form): Forms\Form
     {
         return $form
             ->schema([
+                TextInput::make('name')
+                    ->label('Nazwa')
+                    ->required()
+                    ->maxLength(255),
+
                 TextInput::make('part_number')
                     ->label('SKU')
                     ->required()
                     ->unique(Product::class, 'part_number', ignoreRecord: true)
                     ->maxLength(100),
 
-                TextInput::make('slug')
-                    ->label('Slug')
-                    ->required()
-                    ->reactive()
-                    ->afterStateUpdated(fn (Get $get, $set) => $set('slug', Str::slug($get('part_number'))))
-                    ->maxLength(255)
-                    ->unique(Product::class, 'slug', ignoreRecord: true),
+		TextInput::make('slug')
+		    ->label('Slug')
+		    ->required()
+		    ->reactive()
+		    ->afterStateUpdated(function (Get $get, $set) {
+	        // Получаем название производителя по ID (если выбран)
+	        $manufacturerName = '';
+	        if ($get('manufacturer_id')) {
+	        $manufacturer = \App\Models\Manufacturer::find($get('manufacturer_id'));
+	        if ($manufacturer) {
+                $manufacturerName = $manufacturer->name . ' ';
+            }
+        }
+	        // Собираем slug: "бренд + название + артикул"
+	        $slugBase = trim($manufacturerName . ($get('name') ?? '') . ' ' . ($get('part_number') ?? ''));
+	        $set('slug', \Illuminate\Support\Str::slug($slugBase, '-'));
+	    })
+		    ->maxLength(255)
+		    ->unique(\App\Models\Product::class, 'slug', ignoreRecord: true),
 
                 Select::make('manufacturer_id')
                     ->label('Producent')
@@ -61,13 +78,60 @@ class ProductResource extends Resource
                     ->searchable()
                     ->nullable(),
 
-                TextInput::make('short_description')
-                    ->label('Opis krótki')
-                    ->maxLength(255),
+                TextInput::make('purchase_price_netto')
+                    ->label('Cena zakupu netto')
+                    ->numeric()
+                    ->step(0.01)
+                    ->nullable(),
 
-                Textarea::make('meta_description')
-                    ->label('Opis meta')
-                    ->columnSpanFull(),
+                TextInput::make('purchase_price_brutto')
+                    ->label('Cena zakupu brutto')
+                    ->numeric()
+                    ->step(0.01)
+                    ->nullable(),
+
+                TextInput::make('sale_price_netto')
+                    ->label('Cena sprzedaży netto')
+                    ->numeric()
+                    ->step(0.01)
+                    ->nullable(),
+
+                TextInput::make('sale_price_brutto')
+                    ->label('Cena sprzedaży brutto')
+                    ->numeric()
+                    ->step(0.01)
+                    ->nullable(),
+
+                TextInput::make('margin_percent')
+                    ->label('Marża (%)')
+                    ->numeric()
+                    ->step(0.01)
+                    ->nullable(),
+
+                TextInput::make('delivery')
+                    ->label('Dostawa')
+                    ->maxLength(255)
+                    ->nullable(),
+
+                Textarea::make('specification')
+                    ->label('Specyfikacja')
+                    ->columnSpan('full')
+                    ->nullable(),
+
+                Textarea::make('usage')
+                    ->label('Zastosowanie')
+                    ->columnSpan('full')
+                    ->nullable(),
+
+                Textarea::make('replacements')
+                    ->label('Zamienniki')
+                    ->columnSpan('full')
+                    ->nullable(),
+
+                Textarea::make('oe_codes')
+                    ->label('Kody OE')
+                    ->columnSpan('full')
+                    ->nullable(),
 
                 Toggle::make('is_active')
                     ->label('Aktywny')
@@ -78,18 +142,29 @@ class ProductResource extends Resource
                     ->disk('public')
                     ->directory('products')
                     ->image()
-                    ->required(),
+                    ->nullable(),
+
+                Textarea::make('description')
+                    ->label('Opis')
+                    ->columnSpan('full'),
+
+                Forms\Components\Repeater::make('crosses')
+                    ->label('Krosy')
+                    ->schema([
+                        TextInput::make('0')->label('Kros'),
+                    ])
+                    ->columnSpan('full'),
             ]);
     }
 
-    public static function table(Table $table): Table
+    public static function table(Tables\Table $table): Tables\Table
     {
         return $table
             ->columns([
                 TextColumn::make('part_number')->label('SKU')->searchable(),
-                TextColumn::make('manufacturer.name')->label('Producent')->searchable(),
-                TextColumn::make('group.name')->label('Kategoria')->searchable(),
-                TextColumn::make('short_description')->label('Opis'),
+                TextColumn::make('manufacturer.name')->label('Producent'),
+                TextColumn::make('group.name')->label('Kategoria'),
+                TextColumn::make('sale_price_brutto')->label('Cena')->money('pln'),
                 IconColumn::make('is_active')->label('Aktywny'),
             ])
             ->filters([

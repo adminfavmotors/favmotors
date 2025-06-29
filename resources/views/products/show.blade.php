@@ -1,65 +1,57 @@
 @extends('layouts.app')
 
-@section('title', $product->name)
-
 @section('content')
-    <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
-        <h1 class="text-3xl font-bold mb-2">{{ $product->name }}</h1>
-        <p class="text-gray-500 mb-2">Producent: {{ $product->manufacturer }}</p>
-        <p class="mb-4">Kod produktu: {{ $product->product_code }}</p>
-        <p class="font-bold text-xl text-blue-600 mb-4">
-            Cena: {{ number_format($product->sale_price_brutto, 2) }} zł
-        </p>
+<div class="container mx-auto p-6">
+    <div class="bg-white rounded shadow p-6">
+        {{-- Название товара --}}
+        <h1 class="text-2xl font-bold mb-4">{{ $product->name }}</h1>
 
-        {{-- Форма добавления в корзину --}}
-        <form method="POST" action="{{ route('cart.add') }}" class="mb-6">
-            @csrf
-            <input type="hidden" name="product_id" value="{{ $product->id }}">
-            <input type="hidden" name="quantity" value="1">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                Dodaj do koszyka
-            </button>
-        </form>
-<form method="POST" action="{{ route('favorites.add') }}" class="inline-block ml-4">
-    @csrf
-    <input type="hidden" name="id" value="{{ $product->id }}">
-    <input type="hidden" name="name" value="{{ $product->name }}">
-    <input type="hidden" name="price" value="{{ $product->sale_price_brutto }}">
-    <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
-        Dodaj do ulubionych
-    </button>
-</form>
+        {{-- Базовая информация --}}
+        <p class="mb-2"><strong>Part Number:</strong> {{ $product->slug }}</p>
+        <p class="mb-2"><strong>Manufacturer:</strong> {{ optional($product->manufacturer)->name }}</p>
+        <p class="mb-2"><strong>Category:</strong> {{ optional($product->category)->name }}</p>
+        <p class="mb-2"><strong>Price Netto:</strong> {{ number_format($product->sale_price_netto, 2, ',', ' ') }} zł</p>
+        <p class="mb-2"><strong>Price Brutto:</strong> {{ number_format($product->sale_price_brutto, 2, ',', ' ') }} zł</p>
 
+        {{-- Описание --}}
+        @if($product->description)
+            <div class="mt-4 prose">
+                {!! nl2br(e($product->description)) !!}
+            </div>
+        @endif
 
-        {{-- Альтернативно Livewire-компонент (если используешь Livewire) --}}
-        {{-- @livewire('add-to-cart', [
-            'productId' => $product->id,
-            'name' => $product->name,
-            'price' => $product->price
-        ]) --}}
+        {{-- Характеристики (usage) --}}
+        @if(! empty($product->usage))
+            <div class="mt-4">
+                <h2 class="text-xl font-semibold">Характеристики</h2>
+                <ul class="list-disc list-inside">
+                    @foreach($product->usage as $key => $value)
+                        <li><strong>{{ ucfirst($key) }}:</strong> {{ $value }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-        <div class="mb-4">
-            <h2 class="font-semibold">Specyfikacja</h2>
-            <p>{{ $product->specification }}</p>
+        {{-- Кроссы --}}
+        @if(! empty($product->crosses))
+            <div class="mt-4">
+                <h2 class="text-xl font-semibold">Кроссы</h2>
+                <ul class="list-disc list-inside">
+                    @foreach($product->crosses as $cross)
+                        <li>
+                            <a href="{{ route('products.show', ['product' => $cross]) }}" class="underline">
+                                {{ $cross }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- Кнопка назад --}}
+        <div class="mt-6">
+            <a href="{{ url()->previous() }}" class="text-blue-600 hover:underline">&larr; Назад</a>
         </div>
-
-        <div class="mb-4">
-            <h2 class="font-semibold">Zastosowanie</h2>
-            <p>{{ $product->usage }}</p>
-        </div>
-
-        <div class="mb-4">
-            <h2 class="font-semibold">Zamienniki</h2>
-            <p>{{ $product->replacements }}</p>
-        </div>
-
-        <div class="mb-4">
-            <h2 class="font-semibold">Kody OE</h2>
-            <p>{{ $product->oe_codes }}</p>
-        </div>
-
-        <a href="{{ route('products.index') }}" class="inline-block mt-6 text-blue-500 hover:underline">
-            ← Powrót do listy produktów
-        </a>
     </div>
+</div>
 @endsection

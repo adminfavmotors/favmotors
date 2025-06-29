@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -21,6 +22,20 @@ class Product extends Model
         'slug',
         'meta_title',
         'meta_description',
+        'name',
+        'price',
+        'cost',
+        'stock',
+        'description',
+        'usage',
+        'crosses',
+    ];
+
+    // Касты для автоматической сериализации/десериализации
+    protected $casts = [
+        'description' => 'string',
+        'usage'       => 'array',
+        'crosses'     => 'array',
     ];
 
     /**
@@ -48,4 +63,38 @@ class Product extends Model
                     ->withPivot('value')
                     ->withTimestamps();
     }
+
+    /**
+     * Информация от поставщика
+     */
+    public function supplierInfo()
+    {
+        return $this->hasOne(\App\Models\SupplierProductInformation::class, 'part_number', 'part_number');
+    }
+public function generateSlug()
+{
+    $manufacturer = $this->manufacturer ? $this->manufacturer->name : '';
+    $slugBase = trim($manufacturer . ' ' . $this->name . ' ' . $this->part_number);
+    return \Illuminate\Support\Str::slug($slugBase, '-');
+}
+protected static function booted()
+{
+    static::creating(function ($product) {
+        // Генерируем slug, если его нет или если slug неуникален
+        $product->slug = $product->generateSlug();
+    });
+
+    static::updating(function ($product) {
+        // Обновляем slug, если изменились name, part_number или производитель
+        if (
+            $product->isDirty('name') ||
+            $product->isDirty('part_number') ||
+            $product->isDirty('manufacturer_id')
+        ) {
+            $product->slug = $product->generateSlug();
+        }
+    });
+}
+
+
 }

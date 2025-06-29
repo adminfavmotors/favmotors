@@ -8,27 +8,36 @@ use App\Models\Banner;
 
 class SiteController extends Controller
 {
-public function home()
-{
-    // получаем только активные баннеры
-    $banners = Banner::where('is_active', true)
-        ->orderBy('sort_order')
-        ->get();
+    public function home()
+    {
+        // Получаем только активные баннеры
+        $banners = \App\Models\Banner::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
 
-    // получаем только активные акции
-    $promotions = Promotion::where('is_active', true)
-        ->orderBy('sort_order')
-        ->get();
-	// получаем контент страницы "O nas"
-	$aboutPage = \App\Models\Page::where('slug', 'o-nas')->where('is_active', true)->first();
+        // Получаем только активные акции
+        $promotions = \App\Models\Promotion::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
 
-    // получаем страницу «O nas»
-    $aboutPage = \App\Models\Page::where('slug', 'o_nas')
-        ->where('is_active', true)
-        ->first();
+        // Получаем страницу «O nas»
+        $aboutPage = \App\Models\Page::where('slug', 'o_nas')
+            ->where('is_active', true)
+            ->first();
 
-return view('home', compact('banners', 'promotions', 'aboutPage'));
-}
+        // Получаем категории (главные + потомки)
+        $categories = \App\Models\Category::with('children')
+            ->whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
+
+        return view('home', [
+            'banners'    => $banners,
+            'promotions' => $promotions,
+            'aboutPage'  => $aboutPage,
+            'categories' => $categories,
+        ]);
+    }
 
     public function addToCart(Request $request)
     {

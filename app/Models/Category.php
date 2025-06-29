@@ -25,5 +25,17 @@ class Category extends Model
     {
         return $this->hasMany(Category::class, 'parent_id');
     }
+
+    public static function tree()
+    {
+        return self::whereNull('parent_id')
+            ->with('children')
+            ->orderBy('name')
+            ->get();
+    }
+    public function products()
+    {
+    return $this->belongsToMany(\App\Models\Product::class, 'category_product', 'category_id', 'product_id');
 }
 
+}

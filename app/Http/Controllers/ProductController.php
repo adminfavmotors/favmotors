@@ -9,8 +9,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $products = Product::latest()->get();
-
+	$products = Product::latest()->paginate(50);
         return view('products.index', compact('products'));
     }
 

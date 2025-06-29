@@ -4,6 +4,8 @@
 
 <livewire:hero-slider />
 
+<x-category-menu :categories="$categories" />
+
 <!-- Hero Section -->
 <section class="hero">
   <div class="text-center">
